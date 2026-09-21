@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup
 import logfire
 
-def parser_html(file_path: str):
+def parse_html(file_path: str):
     """Parse HTML file and return the text content."""
 
     with logfire.span("HTML Parser", filename = file_path):
