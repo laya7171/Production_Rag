@@ -1,0 +1,23 @@
+fastapi
+uvicorn[standard]
+python-dotenv
+numpy
+requests
+
+google-generativeai
+langchain-google-genai
+sentence-transformers  ## fallback if google embedding model fails
+
+langchain
+langchain_ollama
+unstructured
+python-pptx
+python-docx
+pypdf
+beautifulsoup4
+pdfplumber
+
+qdrant-client
+
+logfire[fastapi,requests]
+loguru
