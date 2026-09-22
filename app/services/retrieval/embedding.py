@@ -86,8 +86,10 @@ def embed_texts(texts: list[str]) -> list[list[float]]:
     for i in range(0, len(texts), BATCH_SIZE):
         batch = texts[i:i + BATCH_SIZE]
         embeddings = _embed_batch(batch)
-        with logfire.context({"batch_index": i // BATCH_SIZE, "batch_size": len(batch)}):
-            logfire.info(f"Embedded batch of {len(batch)} texts.")
+        logfire.info(
+            "Embedded batch of {batch_size} texts.",
+            batch_size=len(batch),
+        )
         all_embeddings.extend(embeddings)
 
     return all_embeddings

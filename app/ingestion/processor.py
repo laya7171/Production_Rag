@@ -16,7 +16,10 @@ from app.ingestion.loaders.office import parse_office
 from app.ingestion.chunking.splitter import chunk_text
 from app.services.retrieval.embedding import embed_texts, get_embedding_dim
 
-logfire.configure(service_name="enterprise-ingestion-service")
+logfire.configure(
+    service_name="enterprise-ingestion-service",
+    send_to_logfire=False,
+)
 
 PROCESSED_DATA_DIR = "processed_data"
 
@@ -144,7 +147,7 @@ def run_universal_ingestion(base_dir: str, explicit_source_type: str = None, wip
             )
             logfire.info(f"Recreated Qdrant collection: {settings.QDRANT_COLLECTION_NAME}")
 
-        if not qdrant_client.collection_exists(settings.QDRANT_COLLECTION_NAMED):
+        if not qdrant_client.collection_exists(settings.QDRANT_COLLECTION_NAME):
             dim = get_embedding_dim()
             qdrant_client.recreate_collection(
                 collection_name=settings.QDRANT_COLLECTION_NAME,
@@ -153,38 +156,38 @@ def run_universal_ingestion(base_dir: str, explicit_source_type: str = None, wip
             logfire.info(
                 f"Created Qdrant collection: {settings.QDRANT_COLLECTION_NAME} with embedding dimension: {dim}"
             )
-            
-            subdirs = [
-                d for d in os.listdir(base_dir)
-                if os.path.isdir(os.path.join(base_dir, d))
-            ]
 
-            if not subdirs:
+        subdirs = [
+            d for d in os.listdir(base_dir)
+            if os.path.isdir(os.path.join(base_dir, d))
+        ]
+
+        if not subdirs:
+            if explicit_source_type:
+                source_type = explicit_source_type
+            else:
+                base_name = os.path.basename(os.path.normpath(base_dir))
+                source_type = (
+                    "true" if "true" in base_name.lower() else
+                    "noisy" if "noisy" in base_name.lower() else
+                    "general"
+                )
+                logfire.info(f"Detected source type: {source_type}")
+            process_directory(base_dir, source_type)
+
+        else:
+            for subdir in subdirs:
+                subdir_path = os.path.join(base_dir, subdir)
                 if explicit_source_type:
                     source_type = explicit_source_type
                 else:
-                    base_name = os.path.basename(os.path.normpath(base_dir))
                     source_type = (
-                        "true" if "true" in base_name.lower() else
-                        "noisy" if "noisy" in base_name.lower() else
+                        "true" if "true" in subdir.lower() else
+                        "noisy" if "noisy" in subdir.lower() else
                         "general"
                     )
-                    logfire.info(f"Detected source type: {source_type}")
-                    process_directory(base_dir, source_type)
-
-            else:
-                for subdir in subdirs:
-                    subdir_path = os.path.join(base_dir, subdir)
-                    if explicit_source_type:
-                        source_type = explicit_source_type
-                    else:
-                        source_type = (
-                            "true" if "true" in subdir.lower() else
-                            "noisy" if "noisy" in subdir.lower() else
-                            "general"
-                        )
-                        logfire.info(f"Detected source type for {subdir}: {source_type}")
-                    process_directory(subdir_path, source_type)
+                    logfire.info(f"Detected source type for {subdir}: {source_type}")
+                process_directory(subdir_path, source_type)
 
 
 if __name__ == "__main__":
